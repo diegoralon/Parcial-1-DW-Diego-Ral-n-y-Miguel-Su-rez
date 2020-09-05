@@ -1,0 +1,191 @@
+---
+title: "Parcial 1"
+author: "Diego Ralón y Miguel Suárez"
+date: "3/9/2020"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r}
+library(flexdashboard)
+```
+
+```{r}
+library(dplyr)
+library(DT)
+library(ggplot2)
+```
+
+```{r}
+library(RMySQL)
+
+mydb = dbConnect(MySQL(), user='root', password='lol', dbname='academatica', host='172.19.0.2', port= 3306)
+
+as = dbGetQuery(mydb, "select * from academatica.stats")
+
+am = dbGetQuery(mydb, "select * from academatica.metadata")
+
+av = dbGetQuery(mydb, "select * from academatica.videos")
+
+as = rename(as, video_id = id)
+
+asam = merge (as, am, by = "video_id")
+
+
+```
+
+# Academatica Stats 
+
+## 
+
+###
+```{r}
+DT::datatable(as)
+```
+
+##
+
+###
+```{r}
+valueBox(sum(as$viewCount),
+         caption = "visitas totales",
+         icon = "fa-binoculars")
+```
+
+
+###
+```{r}
+valueBox(sum(as$likeCount),
+         caption = "likes totales",
+         icon = "fa-thumbs-up", color = "green")
+```
+
+
+###
+```{r}
+valueBox(sum(as$dislikeCount),
+         caption = "DisLikes totales",
+         icon = "fa-thumbs-down", color = "red")
+```
+
+###
+```{r}
+valueBox(sum(as$commentCount),
+         caption = "Comentarios Totales",
+         icon = "fa-comments", color = "navy")
+```
+
+# Análisis popularidad 
+
+##
+
+### Mejores videos 
+```{r}
+mejorvid <-asam %>% 
+  select(title,viewCount) %>% 
+  group_by(title) %>% 
+  summarise(mv = sum(viewCount)) %>% 
+  filter(mv > 1500000)
+
+ggplot(mejorvid, aes(x = title, y = mv))+
+  geom_bar(fill = "dodgerblue", stat= "identity")+
+  theme(text = element_text(size=5))+
+  coord_flip()
+
+
+```
+
+
+### Peores Videos
+```{r}
+peoresvid <-asam %>% 
+  select(title,viewCount) %>% 
+  group_by(title) %>% 
+  summarise(pv = sum(viewCount)) %>% 
+  filter(pv < 500)
+
+ggplot(peoresvid, aes(x = title, y = pv))+
+  geom_bar(fill = "deepskyblue1", stat= "identity")+
+  theme(text = element_text(size=5))+
+  coord_flip()
+```
+
+# Análisis Likes
+
+##
+
+### Videos más likeados
+```{r}
+videosmaslikeados <- asam %>% 
+  select(title,likeCount) %>% 
+  group_by(title) %>% 
+  summarise(lc = sum(likeCount)) %>% 
+  filter(lc > 10000)
+
+
+ggplot(videosmaslikeados, aes(x = title, y = lc))+
+  geom_bar(fill = "seagreen4", stat= "identity")+
+  theme(text = element_text(size=5))+
+  coord_flip()
+
+```
+
+
+
+
+### Videos menos likeados 
+```{r}
+videosmasdislikeados <- asam %>% 
+  select(title,dislikeCount) %>% 
+  group_by(title) %>% 
+  summarise(ld = sum(dislikeCount)) %>% 
+  filter(ld > 700)
+
+
+ggplot(videosmasdislikeados, aes(x = title, y = ld))+
+  geom_bar(fill = "paleturquoise3", stat= "identity")+
+  theme(text = element_text(size=5))+
+  coord_flip()
+```
+
+# Análisis comentarios
+
+##
+
+
+
+### Videos más comentados
+```{r}
+videosmascoment <- asam %>% 
+  select(title,commentCount) %>% 
+  group_by(title) %>% 
+  summarise(vc = sum(commentCount)) %>% 
+  filter(vc > 700)
+
+
+ggplot(videosmascoment, aes(x = title, y = vc))+
+  geom_bar(fill = "paleturquoise3", stat= "identity")+
+  theme(text = element_text(size=5))+
+  coord_flip()
+```
+
+
+
+
+### video menos comentado
+```{r}
+videosmencoment <- asam %>% 
+  select(title,commentCount) %>% 
+  group_by(title) %>% 
+  summarise(vmc = sum(commentCount)) %>% 
+  filter(vmc < 8)
+
+
+ggplot(videosmencoment, aes(x = title, y = vmc))+
+  geom_bar(fill = "paleturquoise3", stat= "identity")+
+  theme(text = element_text(size=5))+
+  coord_flip()
+```
+
